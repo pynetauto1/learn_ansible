@@ -1,0 +1,10 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: update repository index
+    yum:
+      update_cache: yes
+    when: ansible_distribution == "Fedora" and ansible_distribution_version == "33"

@@ -1,0 +1,35 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: update repository index
+    apt:
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install apache2 package
+    apt:
+      name: apache2
+    when: ansible_distribution == "Ubuntu"
+
+  - name: add php support for apache
+    apt:
+      name: libapache2-mod-php
+    when: ansible_distribution == "Ubuntu"
+
+  - name: update repository index
+    dnf:
+      update_cache: yes
+    when: ansible_distribution == "Fedora"
+
+  - name: install httpd package
+    dnf:
+      name: httpd
+    when: ansible_distribution == "Fedora"
+
+  - name: add php support for httpd
+    dnf:
+      name: php
+    when: ansible_distribution == "Fedora"
