@@ -1,0 +1,14 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+  - name: checking service status
+    command: systemctl status "{{ item }}"
+    with_items: mariadb
+    register: service_state
+    ignore_errors: yes
+
+  - name: display service statet
+    debug:
+     var: service_state
