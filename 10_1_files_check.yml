@@ -1,0 +1,15 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: get contents of file
+    command: cat /var/www/html/index.html
+    register: file_output
+    become: true
+
+  - name: View the file contents
+    debug:
+      msg: "{{file_output.stdout.split('\n') }}"
+

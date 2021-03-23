@@ -1,0 +1,44 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (Ubuntu)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install updates (Fedora)
+    tags: always
+    dnf:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "Fedora"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: create new user - lcarter
+    tags: always
+    user:
+      name: lcarter
+      groups: root
+
+  - name: add ssh key for lcarter
+    tags: always
+    authorized_key:
+      user: lcarter
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP7mT9vMhcPs8aikep2fUs+xYK82OpJQ+AKsKLbpTQ8K ansible"
+
+  - name: add sudoers file for lcarter
+    tags: always
+    copy:
+      src: sudoer_lcarter
+      dest: /etc/sudoers.d/lcarter
+      owner: root
+      group: root
+      mode: 0440

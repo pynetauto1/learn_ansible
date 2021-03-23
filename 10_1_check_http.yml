@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+  ## perform start service for mariadb
+  - name: Start HTTP service if not started
+    become: yes
+    service:
+      name: httpd
+      state: started
+    when: ansible_distribution == "Fedora"
+
+  ## check to see the state of the mariadb service status
+  - name: Check status of httpd service
+    service_facts:
+    register: service_state
+  - debug:
+      var: service_state.ansible_facts.services["httpd.service"].state

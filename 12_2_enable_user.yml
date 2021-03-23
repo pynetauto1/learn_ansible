@@ -1,0 +1,143 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (Ubuntu)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install updates (Fedora)
+    tags: always
+    dnf:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "Fedora"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: create new user - lcarter
+    tags: always
+    user:
+      name: lcarter
+      groups: root
+
+  - name: add ssh key for lcarter
+    tags: always
+    authorized_key:
+      user: lcarter
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGg9a2y3LIGC5mi2rZaoOU6AOAckZL7xVA3yxQAeWM7h ansible"
+
+  - name: add sudoers file for lcarter
+    tags: always
+    copy:
+      src: sudoer_lcarter
+      dest: /etc/sudoers.d/lcarter
+      owner: root
+      group: root
+      mode: 0440
+
+- hosts: workstations
+  become: true
+  tasks:
+
+  - name: install unzip
+    package:
+      name: unzip
+
+  - name: install terraform
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/0.14.7/terraform_0.14.7_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      owner: root
+      group: root
+
+- hosts: web_servers
+  become: true
+  tasks:
+
+  - name: install apache2 & PHP packages for Ubuntu
+    tags: apache,apache2,ubuntu
+    apt:
+      name:
+        - apache2
+        - libapache2-mod-php
+      state: latest
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install httpd & php packages for Fedora/CentOS
+    tags: apache,fedora,httpd
+    dnf:
+      name:
+        - httpd
+        - php
+      state: latest
+    when: ansible_distribution == "Fedora"
+
+  - name: start httpd for Fedora/CentOS
+    tags: apache,fedora,httpd
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+    when: ansible_distribution == "Fedora"
+
+  - name: change e-mail address for httpd admin
+    tags: apache,fedora,httpd
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^ServerAdmin'
+      line: ServerAdmin admin@bigcompany.com
+    when: ansible_distribution == "Fedora"
+    register: httpd
+
+  - name: restart httpd for Fedora
+    tags: apache,fedora,httpd
+    service:
+      name: httpd
+      state: restarted
+    when: httpd.changed
+
+  - name: copy default html file from site
+    tags: apache,apache2,httpd
+    copy:
+      src: default_site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: 0644
+
+- hosts: db_servers
+  become: true
+  tasks:
+
+  - name: install mariadb package (Ubuntu)
+    tags: ubuntu,os,mariadb
+    apt:
+      name: mariadb-server
+      state: latest
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install mariadb package (Fedora)
+    tags: fedora,os,mariadb
+    dnf:
+      name: mariadb
+      state: latest
+    when: ansible_distribution == "Fedora"
+
+- hosts: file_servers
+  tags: samba
+  become: true
+  tasks:
+
+  - name: install samba package
+    package:
+      name: samba
+      state: latest

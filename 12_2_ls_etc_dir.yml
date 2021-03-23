@@ -1,0 +1,15 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: Read file content
+    command: ls -l /etc/sudoers.d
+    register: file_output
+    become: true
+
+  - name: View contents of command per line
+    debug:
+      msg: "{{file_output.stdout.split('\n') }}"
+

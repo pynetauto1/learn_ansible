@@ -1,0 +1,15 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: Read file content
+    command: cat /etc/passwd
+    register: file_output
+    become: true
+
+  - name: View the file contents per line
+    debug:
+      msg: "{{file_output.stdout.split('\n') }}"
+
